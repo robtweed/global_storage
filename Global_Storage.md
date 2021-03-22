@@ -17,6 +17,7 @@ They can also be incredibly fast.  In fact, our recent experiments have shown th
 So if you thought you knew everything there was to know about databases, but have never heard of
 Global Storage databases, you really should take the time to find out more!
 
+----
 
 # So What is a Global Storage Database?
 
@@ -30,6 +31,7 @@ There are several available "native" Global Storage
 databases.  However, the specification for Global Storage and the associated APIs needed to provide access to a Global Storage database are relatively straightforward, so it's also possible to create a Global Storage abstraction on top of other databases, provided they allow the implementation of some very specific features.  Typically, this means that most databases that are, themselves, hierarchical and use an underlying *b-tree* engine are potential candidates for layering a Global Storage abstraction on top.  However, additionally, Redis - typically assumed to be a fairly simple (but very fast) key/value store - turns out to also be a candidate, due to one of its unique APIs. For more information, see the separate, detailed document on 
 [Global Storage Implementations](./Implementations.md).
 
+----
 
 # How is Data Represented in Global Storage?
 
@@ -78,6 +80,7 @@ There is no explicit schema for Globals, so the semantic meaning of each subscri
 
 Some Global Storage users feel that such a completely free-form usage of data within a database is too liberal and maybe even dangerous, and create their own schemas - for which they use Global Storage itself.  However, this is an entirely optional thing to do, and it's up to you to decide what, if anything, your requirements are beyond simple storage in Global Nodes.
 
+----
 
 # Visualising Global Storage
 
@@ -168,6 +171,7 @@ Indeed, you'll see that the "Address" property introduces its own sub-tree of No
 
 The point is that there is no hard and fast set of rules that are imposed on you: it's up to you how many subscripts you define and what they mean throughout the hierarchical tree of Nodes you create within a specific Global.
 
+----
 
 # Global Storage is Actually Just Like JSON
 
@@ -203,6 +207,7 @@ If what is described above is a little confusing, then consider how this compare
 
 So, in effect, Global Storage can be considered to be the equivalent of persistent JSON storage.  Just like JSON, you have complete freedom in what properties you define at each level within its hierarchy (cf Global Subscripts) and what each property/subscript means or represents.  Just like in JSON, there's nothing that needs to be pre-declared or pre-defined.  You can arbitrarily invent and add new subscripts to represent and store new concepts and values as you need them, extending the JSON structure as you wish.
 
+----
 
 # Intermediate and Leaf Nodes in a Global
 
@@ -272,6 +277,7 @@ However, I'd recommend not giving values to Intermediate Nodes. *ie* this would 
         employee["UK", "London", 123456789]                         Intermediate Node without value
         employee["UK", "London", 123456789, "name"] = "Rob Tweed"   Leaf Node
 
+----
 
 
 # The Basic CRUD APIs for Global Storage
@@ -280,7 +286,7 @@ The basic, fundamental APIs for creating, reading, editing and deleting Global N
 
 - [Set](#set)
 - [Get](#get)
-- [Kill or Delete](#kill_or_delete)
+- [Kill or Delete](#kill-or-delete)
 - [Data](#data)
 
 ## Set
@@ -478,7 +484,7 @@ If the arguments match an existing Intermediate Node, then it returns:
 
 Of course, following my earlier recommendations, you will normally expect an Intermediate Node to be indicated by a return value of 10.
 
-
+----
 
 # The Magic of A Global's Subscripts
 
@@ -489,7 +495,7 @@ The subscripts of a Global have two absolutely key features that arguably give G
 
 ## Alphanumeric Collation of Subscripts
 
-A deceptively simple, yet incredibly powerful characteristic of a Global's subscripts is that they are automatically collated in ASCII (ie alphanumeric) sequence.  This happens automatically when you use either the [*Set*](#set) or [*Kill*](#kill_or_delete) APIs:
+A deceptively simple, yet incredibly powerful characteristic of a Global's subscripts is that they are automatically collated in ASCII (ie alphanumeric) sequence.  This happens automatically when you use either the [*Set*](#set) or [*Kill*](#kill-or-delete) APIs:
 
 - when you add/create a new Global Node, each of its subscripts is automatically collated in alphanumeric sequence with respect to its peers.
 
@@ -673,6 +679,83 @@ The *Previous* API requires the same 3 arguments as the *Next* API:
 
 However, the subscript previous sibling pointers are used to return the result.
 
+----
 
+# Traversal of Leaf Nodes in Global Storage
+
+There's one final feature of Global Storage that needs to be highlighted.  It's not used as frequently as the *Next* and *Previous* APIs that were described in the previous section, but it can be extremely useful when you need it!
+
+Not only is Global Storage optimised for traversal from one subscript value to its immediate peers, Leaf Nodes are also optimised to point to their previous and next Leaf Nodes.  What constitutes a previous and next Leaf Nodes is determined by the alphanumeric collation of the Global's subscripts, as described previously.
+
+So, having accessed a particular Leaf Node in a Global, you can very efficiently get it its previous and/or next Leaf Node in the Global.  This can allow very rapid traversal through all the data within a Global, or through a sub-section/sub-tree of a Global.
+
+Let's go back to that previous example where we'd created the following records, collated as shown according to their subscript values:
+
+        employee["UK", Bristol", 987654321, "name"] = "John Smith"
+        employee["UK", "London", 123456464, "job_title"] = "Accountant"
+        employee["UK", "London", 123456464, "name"] = "John Smith"
+        employee["UK", "London", 123456789, "job_title"] = "Consultant"
+        employee["UK", "London", 123456789, "name"] = "Rob Tweed"
+        employee["USA", Albany", 100011111, "name"] = "Tom Jones"
+
+If we have accessed, for example, this Leaf Node:
+
+        employee["UK", "London", 123456464, "name"]
+
+then it has a pointer to its previous Leaf Node:
+
+        employee["UK", "London", 123456464, "job_title"]
+
+and a pointer to its next Leaf Node:
+
+        employee["UK", "London", 123456789, "job_title"]
+
+
+These Leaf Node pointers are automatically updated behind the scenes whenever a *Set* or *Kill* is invoked.
+
+
+## The *Query* API
+
+The Global Storage API that makes use of these Leaf Node pointers is named *Query*.
+
+Implementation of the *Query* API can vary, but, in effect, it requires 3 arguments:
+
+- Global Name (eg *employee*)
+- An array or list of subscripts (eg ["UK", "London", 123456789, "name"])
+- The direction of traversal: ie forwards or backwards, or next/previous
+
+The *Query* API behaves as follows:
+
+- If the Global Name and subscripts specify a Leaf Node that exists in the database, then what is returned is the reference to its previous or next Leaf Node, in the form of its Global Name and its array of subscripts.
+
+- If the Global Name exists in the database, but the subscripts do not actually specify an existing Leaf Node, then what is returned is, in effect, a reference the previous or next Leaf Node for the one specified, *had it actually existed as a Leaf Node*.
+
+- If, instead of an array of subscripts, the subscripts value is an empty string, then what is returned is:
+  - a reference to the first Leaf Node of the Global, if the specified direction is *next*
+  - a reference to the last Leaf Node of the Global, if the specified direction is *previous*
+
+- If the specified Leaf Node is the first Leaf Node in the Global and the specified direction is *previous*, then an empty string is returned.
+
+- Similarly, if the specified Node is the last Leaf Node in the Global and the specified direction is *next*, then an empty string is returned.
+
+- if the Global Name doesn't exist in the database, an empty string is returned.
+
+Used in an iteration loop, you can see that an empty string value for the subscript can be used to seed the iterations, and a return value of empty string can be used to determine completion of the traversal. 
+
+
+## Comparison with *Next* and *Previous* APIs for Global Traversal
+
+Leaf Node traversal through a Global can, of course, also be achieved by nesting *Next* APIs to iterate through all the subscripting levels.  However, in the example above, this would require:
+
+- 2 iterations at subscript level 1 (to get *UK* and *USA*)
+- 3 iterations at subscript level 2
+- 4 iterations at subscript level 3
+- 6 iterations at subscript level 4
+
+So a total of 15 iterations to exhaustively traverse the Leaf Nodes of the Global.
+
+By comparison, using the Leaf Node pointers allows traversal of the entire Global in just 6 iterations, a significant difference even in our tiny example Global.
+
+So if what you're interested in is the Leaf Nodes and/or data records in a Global, the *Query* API can be a significantly more efficient means of traversal.
 
 
