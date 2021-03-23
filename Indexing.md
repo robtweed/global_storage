@@ -6,11 +6,13 @@ Indexing is an important feature of databases: an index provides the means by wh
 
 Global Storage databases leave indexing entirely in your hands.  While this might seem like a retrograde step to someone used to the built-in convenience and "bells and whistles" of a modern database, it actually provides a database designer with the ability to design exactly the indexing strategy they need for their particular circumstances.  This can result in more efficient overall data storage: indices that are unlikely to ever be needed don't end up wasting disk storage, and, in skilled, experienced hands, a much more effecive and performant indexing strategy can be designed than often created by leaving it to the database management system to decide.
 
-To use a photography analogy, it's like the difference between using modern automatic lenses and selecting completely automatic settings on your camera for exposure and auto-focus, compared with using manual lenses and a manual exposure setting on the camera, leaving the photographer to take control and use their experience and creative expertise.
+To use a photography analogy, it's a bit like the difference between using modern automatic lenses and selecting completely automatic settings on your camera for exposure and auto-focus, compared with using manual lenses and a manual exposure setting on the camera, leaving the photographer to take control and use their experience and creative expertise.  The novice or casual photographer can leave it to the camera to make the decisions which it will probably do well enough most of the time for you to be happy with the photographs.  However, the expert photographer can use their skill and experience to cater for more challenging situations which, left to the camera, might result in the subject of the photograph being badly over-exposed or under-exposed, or the subject being out of focus.
 
 # What is an Index Anyway?
 
-Because many databases include automatic indexing behind the scenes, you may not even really know what an index is or what it looks like.  It's actually very simple really, but the design of indices also brings into focus the need to carefully focus on your database structure and design as a whole.
+Because many databases include automatic indexing behind the scenes, you may not even really know what an index is or what it looks like.  They are simply other records stored in the database, but they act as pointers to the main data records, and are designed around the search criteria you'll use when querying your database.
+
+It's actually very simple really, but the design of indices also brings into focus the need to carefully focus on your database structure and design as a whole.
 
 Let's go back to the employee database examples we've used throughout these articles.  In fact, the examples that have been used so far are actually pretty badly designed, but they were described to allow easy understanding of basic Global Storage techniques.
 
@@ -57,21 +59,15 @@ To obtain the next id, we can make use of a Global Storage API we've not previou
 
 ### The *Increment* API
 
-The *Increment* Id requires two arguments, allowing you to specify a Global Node:
-
+The *Increment* Id typically requires two arguments, allowing you to specify a Global Node:
 
 - Global Name (eg *employee*)
 - An array or list of subscripts (eg ["counter"])
 
 If the specified Global Node does not currently exist, its value is set to 1 and a value of 1 is returned.
 
-If the specified Global Node does exist:
+If the specified Global Node does exist, its value is incremented by 1.  The new value replaces the previous value in the Global Node, and that new value is also returned.
 
-- if it currently has a numeric value, it is incremented by 1.  The new value replaces the previous value in the Global Node, and that new value is also returned.
-
-- if it currently has a string value that does not start with any numeric characters, its value is replaced with the integer value 1, and 1 is returned
-
-- if it has a string value that commences with a number other than zero and which is followed by zero, one or more numbers, the numeric component of the prefix is incremented by 1, the resulting value replaces the previous value in the Global Node, and that value is also returned.
 
 For example:
 
@@ -91,35 +87,10 @@ For example:
 
   and 2 will be returned as the result of the *Increment* API.
 
-The above scenarios are the normal usage of *Increment*.
 
-However, you need to be aware of the effects you can get if you apply it to other nodes.  For example:
+Note that you can also provide a third argument, which allows you to specify the amount to increment or even decrement.  By default, the increment value is +1, but you can specify any positive or negative integer value.  For Id generation, just use the default.
 
-- if:
-
-        employee["counter"] = "hello world"
-
-  then incrementing it will create:
-
-        employee["counter"] = 1
-
-  and 1 will be returned as the result of the *Increment* API.
-
-
-Perhaps more apparently bizarrely:
-
-- if:
-
-        employee["counter"] = "23hello world"
-
-  then incrementing it will create:
-
-        employee["counter"] = 24
-
-
-  This is because the existing string value ("23hello world") is evaluated as if it was the integer value 23 because it starts with the numbers "23".  Any subsequent non-numeric values are discarded.
-
-Pretty weird effects, I'll admit, but my golden rule is to only apply the *Increment* API to Global Nodes that you are using as an integer counter record.
+Note also that the *Increment* API is usually implemented to safely and reliably allow concurrent multi-user access, avoiding any risk of two users invoking it simultaneously and being returned the same value.
 
 
 ### Creating a new Employee Record
@@ -198,9 +169,14 @@ Let's add a third employee:
 Note, of course, that the last names in the "by_last_name" index records are automatically sorted alphabetically for us.
 
 
-### Using an Index
 
-If we want to find all the employees whose last name is Tweed, we can now use the "by_last_name" index records within the Global.  This is where the *Next* API comes in.  We'd implement an iteration loop that starts:
+# Using an Index
+
+Using Indices in Global Storage is easiest explained using an example, so we'll continue with the one we've been developing so far.
+
+Indices come into play when you want to access one or more data records by one or more particular criteria - such as the employee's name.
+
+So, for example, if we want to find all the employees whose last name is Tweed, we can use the "by_last_name" index records within the Global.  This is where the Global Storage [*Next*](./Subscripts.md#next) API comes in.  We'd implement an iteration loop that starts:
 
         Next employee["by_last_name", "Tweed"], ""  // seed using an empty string
 
@@ -230,7 +206,7 @@ To get the next one:
 Currently there are no more records, so an empty string value is returned, telling us that we've accessed all the employees named *Tweed*.
 
 
-### Visualising Our Index Example
+## Visualising Our Index Example
 
 The following diagrams may help visualise what we're doing:
 
@@ -275,4 +251,237 @@ These steps are repeated.  In our example, however, when we invoke the *Next* AP
 ![index_7](./diagrams/gs29.png)
 
 
+
+# Same or Separate Globals for Data Records and Indices?
+
+The example so far has combined both the data records (the *by_id* Nodes) with index records (the *by_last_name* Nodes).  Whilst that's a perfectly acceptable and frequently-used pattern, there is also a school of thought that you should use different Globals.  In other words, the same functionality could have been achieved using this pattern:
+
+
+        employee[1, "first_name"] = "Rob"
+        employee[1, "last_name"] = "Tweed"
+        employee[2, "first_name"] = "John"
+        employee[2, "last_name"] = "Smith"
+        employee[3, "first_name"] = "Simon"
+        employee[3, "last_name"] = "Tweed"
+
+        employeeIndex["by_lastName", 2] = ""
+        employeeIndex["by_last_name", "Tweed", 1] = ""
+        employeeIndex["by_last_name", "Tweed", 3] = ""
+
+        employeeId["counter"] = 3
+
+Note that in the above example I've also used a separate Global for the Id counter.
+
+Flexibility is a key feature of Global Storage, and there's no right or wrong way to design your data and Index Global Storage.
+
+
+# Indices Should Always be Derived from Data Records
+
+Global Storage won't force you to design your data records and Indices in any particular way, but a very good practice to adopt is to always make sure that there is no unique information maintained within an Index.  An index should always just contain information that is held and maintained in the data records: ie an index should always be a transformation of information held in data records.
+
+In doing so, provided you have a back-up of your data records, it means you can always re-create your indices by re-processing the data records.
+
+In practice, you'll find that, as in the example above, the key part of an index is its subscripts which will point to either subscripts or data values in the Data records.  You'll also find that index record Leaf Nodes rarely need to have a value other than an empty string, as in the example above.  Indices are therefore used as pointers to the Data records, based on some particular search strategy.
+
+
+# Extending our Example
+
+Consider the following extension to our example which adds the employee's role and office to the Data records, and maintains two new indices (*by_role* and *by_office*):
+
+        employee["by_id", 1, "first_name"] = "Rob"
+        employee["by_id", 1, "last_name"] = "Tweed"
+        employee["by_id", 1, "office"] = "London"
+        employee["by_id", 1, "role"] = "Consultant"
+
+        employee["by_id", 2, "first_name"] = "John"
+        employee["by_id", 2, "last_name"] = "Smith"
+        employee["by_id", 2, "office"] = "Bristol"
+        employee["by_id", 2, "role"] = "Programmer"
+
+        employee["by_id", 3, "first_name"] = "Simon"
+        employee["by_id", 3, "last_name"] = "Tweed"
+        employee["by_id", 3, "office"] = "London"
+        employee["by_id", 3, "role"] = "Programmer"
+
+        employee["by_last_name", "Smith", 2] = ""
+        employee["by_last_name", "Tweed", 1] = ""
+        employee["by_last_name", "Tweed", 3] = ""
+
+        employee["by_role", "Consultant", 1] = ""
+        employee["by_role", "Programmer", 2] = ""
+        employee["by_role", "Programmer", 3] = ""
+
+        employee["by_office", "Bristol", 2] = ""
+        employee["by_office", "London", 1] = ""
+        employee["by_office", "London", 3] = ""
+
+        employee["counter"] = 3
+
+So now we can answer the questions: 
+
+- who are the employees of the London office?
+- who are the programmers in the organisation?
+
+We could also efficiently answer the question:
+
+- who are the programmers in the London office?
+
+We could do this by traversing the *by_role* index for *Programmer*, and for each *id* found in it, check (using the *Data* API) if that *id* also exists in the *by_office* index for *London*.
+
+Alternatively, to answer that question, you could design and maintain a composite index, eg:
+
+        employee["by_role_and_office", "Consultant", "London", 1] = ""
+        employee["by_role_and_office", "Programmer", "Bristol", 2] = ""
+        employee["by_role_and_office", "Programmer", "London", 3] = ""
+
+
+The flexibility of Global Storage means it's up to you to design what you need for your particular circumstances.
+
+
+# Maintaining Indices
+
+
+It's up to you how many indices you maintain and how they are structured, but, of course, you have to rememeber that Global Storage itself does nothing to maintain them: it's all up to you.  The more indices you decide to use, the more logic you need to design and write to maintain them.
+
+You need to remember that your database is likely to be quite a dynamic thing: you're not simply going to be adding new records to the database.  There will be times when you need to change data record values, and times when you'll need to delete data records.  These changes need to also be reflected in your indices: you can't risk having index records that are out of synchronisation with the data records to which they are supposed to point.
+
+Typically, you'll write APIs to implement these create/edit/delete actions for your database:
+
+- add: This will allocate a new Id for the entity, store its data records and then create its appropriate index records
+
+- edit: This will change a particular Data Record's Leaf Node value, and, if this is a value that is used in one or more indices, the original index must be deleted and a new index created based on the new value
+
+- delete: This will first use the Data Records to determine which Index records need to be deleted, and once these index records are deleted, the Data Records can be deleted.
+
+
+Let's illustrate some examples in action.
+
+## Add a new Employee
+
+This will create the data records:
+
+
+        employee["by_id", 4, "first_name"] = "David"
+        employee["by_id", 4, "last_name"] = "Jones"
+        employee["by_id", 4, "office"] = "Bristol"
+        employee["by_id", 4, "role"] = "Manager"
+
+and the index records:
+
+        employee["by_last_name", "Jones", 4] = ""
+        employee["by_role", "Manager", 4] = ""
+        employee["by_office", "Bristol", 4] = ""
+
+
+## Edit an Indexed Value
+
+If we change:
+
+        employee["by_id", 1, "role"] = "Consultant"
+
+to:
+
+        employee["by_id", 1, "role"] = "Director"
+
+
+then this index record must be deleted:
+
+        employee["by_role", "Consultant", 1] = ""
+
+and this new index record must be created:
+
+        employee["by_role", "Director", 1] = ""
+
+
+## Delete an Employee Record
+
+If we wanted to delete this Employee Data Record:
+
+        employee["by_id", 2, "first_name"] = "John"
+        employee["by_id", 2, "last_name"] = "Smith"
+        employee["by_id", 2, "office"] = "Bristol"
+        employee["by_id", 2, "role"] = "Programmer"
+
+
+We would first go through the indexed properties (*last_name*, *office* and *role*) and delete the corresponding index records:
+
+        employee["by_last_name", "Smith", 2] = ""
+        employee["by_role", "Praogrammer", 2] = ""
+        employee["by_office", "Bristol", 2] = ""
+
+before deleting the data (ie the *by_id*) records.
+
+----
+
+# Using Coded Values
+
+Although not strictly-speaking an Indexing issue, let's round off this document by adding some further refinements to our database and introduce the idea of coded items.
+
+Consider the *role* and *office* properties for our Data records.  Currently they are being stored as text values, eg *London*, *Bristol*, *Programmer*, etc.  It would arguably be better to maintain lists of "official" values for these in the database, by using further Globals, eg:
+
+        office["by_id", 1] = "London"
+        office["by_id", 2] = "Bristol"
+        office["by_id", 3] = "New York"
+
+        office["by_name", "Bristol"] = 2
+        office["by_name", "London"] = 1
+        office["by_name", "New York"] = 3
+
+        office["counter"] = 3
+
+Note that if the office name is to be unique, then we can use an index Leaf Node whose value points to the corresponding Id.
+
+Similarly, for roles:
+
+
+        role["by_id", 1] = "Director"
+        role["by_id", 2] = "Consultant"
+        role["by_id", 3] = "Programmer"
+        role["by_id", 4] = "Manager"      
+
+        role["by_name", "Consultant"] = 2
+        role["by_name", "Director"] = 1
+        role["by_name", "Manager"] = 4
+        role["by_name", "Programmer"] = 3
+
+        role["counter"] = 4
+
+
+These Globals can now be used for the User Interface to generate the menu options from which a user can select the office or role when maintaining the Employee records.
+
+With these coded entities in place, we can now modify the Employee record design:
+
+        employee["by_id", 1, "first_name"] = "Rob"
+        employee["by_id", 1, "last_name"] = "Tweed"
+        employee["by_id", 1, "office"] = 1            (value 1 = London)
+        employee["by_id", 1, "role"] = 2              (value 2 = Consultant)
+
+        employee["by_id", 2, "first_name"] = "John"
+        employee["by_id", 2, "last_name"] = "Smith"
+        employee["by_id", 2, "office"] = 2
+        employee["by_id", 2, "role"] = 3
+
+        employee["by_id", 3, "first_name"] = "Simon"
+        employee["by_id", 3, "last_name"] = "Tweed"
+        employee["by_id", 3, "office"] = 1
+        employee["by_id", 3, "role"] = 3
+
+        employee["by_last_name", "Smith", 2] = ""
+        employee["by_last_name", "Tweed", 1] = ""
+        employee["by_last_name", "Tweed", 3] = ""
+
+        employee["by_role", 2, 1] = ""               (2nd subscript value 2 = Consultant)
+        employee["by_role", 3, 2] = ""               (2nd subscript value 3 = Programmer)
+        employee["by_role", 3, 3] = ""
+
+        employee["by_office", 1, 1] = ""              (2nd subscript value 1 = London)
+        employee["by_office", 1, 3] = ""
+        employee["by_office", 2, 2] = ""              (2nd subscript value 2 = Bristol)
+
+        employee["counter"] = 3
+
+
+Now, of course, the data index records are now a lot less human-readable and much more abstract, and require knowledge of the *role* and *office* Globals to give them meaning.  However, they are a lot more computable and maintainable and, as noted earlier, allow integration with User Interface applications for generating selection menus.
+
+Note, as I've frequently pointed out in this document, Global Storage does not force you to design your database and its indices in any particular way.  The design, logic and semantics of your database is entirely up to you and entirely in your control.  What is described above is simply one suggestion for your guidance and is also to demonstrate how you can use and apply Global Storage to create a highly functional and high-performance database.
 
