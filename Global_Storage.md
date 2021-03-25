@@ -218,8 +218,7 @@ There's a bit more detail that you should know about Global Storage beyond the b
 - [The Magic of a Global's Subscripts](./Subscripts.md)
 - [Traversal of Leaf Nodes in Global Storage](./Leaf_Nodes.md)
 - [Creating and Maintaining Indices in Global Storage](./Indexing.md)
-- [Locking Global Storage Nodes](./Locking.md)
-- [Transactions in Global Storage](./Transactions.md)
+- [Catering for Multi-User Access: Locking and Transactions in Global Storage](./Multi_User_Access.md)
 
 
 
