@@ -265,8 +265,8 @@ By definition, the values in this Global Storage structure, which is, in effect,
 
         status = DATA set["mySet", "WantedValue"]
 
-If status is 0, then it isn't in the Set
-If status is 1, then it is in the Set
+- If status is 0, then it isn't in the Set
+- If status is 1, then it is in the Set
 
 
 ## Delete an entire Set:

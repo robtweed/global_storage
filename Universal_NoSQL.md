@@ -24,7 +24,9 @@ published his hugely influential paper "A Relational Model of Data for Large Sha
 [hierarchical](https://en.wikipedia.org/wiki/Hierarchical_database_model) and 
 [network](https://en.wikipedia.org/wiki/Network_model) architectures.  It wasn't really until 1979, when Larry Ellison adopted Codd's ideas and launched the now ubiquitous Oracle Database that Relational/SQL databases actually took off.
 
-Global Storage databases first appeared in the late 1960s and early 1970s, an example of one of the then in-vogue hierarchical databases.  Global Storage databases have actually been extremely successful in some specific niches, in particular Healthcare and Financial Services/Banking.  
+Global Storage databases first appeared in the late 1960s and early 1970s, an example of one of the then in-vogue hierarchical databases.  Global Storage databases have actually been extremely successful in some specific niches, in particular Healthcare and Financial Services/Banking.
+
+
 [EPIC](epic.com), one of the most-used and most successful so-called Electronic Healthcare Records (EHR), and used by hospitals around the world, is implemented with a Global Storage database.  Sadly, however, outside these niche marketplaces, Global Storage databases are little-known: in fact most people in the IT world have never heard of them, even though there's a strong likelihood that much of their healthcare history is recorded in one, and that their banking may rely on them!
 
 
