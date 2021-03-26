@@ -59,7 +59,7 @@ the basics of [how Global Storage works](./Global_Storage.md).  After that, you'
 is just a relatively straightforward application of the basic capabilities of Global Storage.
 
 - [Key/Value Storage](./Key_Value.md)
-- Document Database
+- [Document Database](./Document_DB.md)
 - Columnar/Tabular Database
 - Graph Database
 - XML Database/Persistent DOM
