@@ -60,7 +60,7 @@ is just a relatively straightforward application of the basic capabilities of Gl
 
 - [Key/Value Storage](./Key_Value.md)
 - [Document Database](./Document_DB.md)
-- Columnar/Tabular Database
+- [Columnar/Tabular Database](./Columnar.md)
 - Graph Database
 - XML Database/Persistent DOM
 - Relational Database
