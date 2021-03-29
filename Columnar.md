@@ -8,7 +8,7 @@ Each of the Global Leaf Nodes for this structure would define the value of a par
 
 For example, this table:
 
-![columnar1](./diagrams.columnar1.png)
+![columnar1](./diagrams/columnar1.png)
 
 
 could be represented in Global Storage thus:
@@ -26,7 +26,7 @@ could be represented in Global Storage thus:
 
 or, diagrammatically:
 
-![columnar2](./diagrams.columnar2.png)
+![columnar2](./diagrams/columnar2.png)
 
 Indices could be added and maintained for each cell value, allowing rapid access by row_id and/or cell value.
 
