@@ -130,6 +130,13 @@ Diagrammatically, then, our single-element XML document would look like this in 
 
 ![dom1](./diagrams/dom1.png)
 
+I've applied colours to the various numbers to show how and where they cross-reference:
+
+- red: node 1 representing the Document Element
+- blue: node 2 representing the *myTag* Element
+- brown: node type 1, representing Elements
+- green: node type 9, representing Document Nodes
+
 
 Further extending the example, adding a child Element with an attribute, eg:
 
