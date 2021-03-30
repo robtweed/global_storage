@@ -62,7 +62,7 @@ is just a relatively straightforward application of the basic capabilities of Gl
 - [Document Database](./Document_DB.md)
 - [Columnar/Tabular Database](./Columnar.md)
 - [Graph Database](./Graph.md)
-- XML Database/Persistent DOM
+- [XML Database/Persistent DOM](./XML_DB.md)
 - Relational Database
 
 Note: with some exceptions, these illustrations aren't intended to be definitive specifications for modelling each type of database, but more to demonstrate how the basic capabilities of Global Storage can be harnessed to implement the needed functionality.  I've made several available as fully-functional implementations in an Open Source project named [QEWD-JSdb](https://github.com/robtweed/qewd-jsdb):
