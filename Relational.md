@@ -84,53 +84,76 @@ The tables themselves could be defined using the model:
 
 while the relationship to other subsidiary tables could be modelled as:
 
-        tableName[key_1, (...key_n,) "subtable", other_tableName, otherTableKey(s)] = ""
+- pointing down a one-to-many relationship from the one to the many:
+
+        tableName[key_1, (...key_n,) "subTable", sub_tableName, "keys", key_position] = key_value
+
+- pointing up from the many to the one:
+
+        tableName[key_1, (...key_n,) "parentTable", parent_tableName, "keys", key_position] = key_value
+
 
 So for our example:
 
         CUSTOMER[customerId, "fields", "name"] = name
         CUSTOMER[customerId, "fields", "address"] = address
         CUSTOMER[customerId, "fields", "totalValue"] = totalValue
-        CUSTOMER[customerId, "subtable", "ORDERS", orderId] = ""
+        CUSTOMER[customerId, "subTable", "ORDERS", "keys", 1] = orderId
 
         ORDERS[orderId, "fields", "customerId"] = customerId
         ORDERS[orderId, "fields", "orderDate"] = orderDate
         ORDERS[orderId, "fields", "invoiceDate"] = invoiceDate
         ORDERS[orderId, "fields", "totalValue"] = totalValue
-        ORDERS[orderId", "subtable", "ITEM", orderId] = ""
+        ORDERS[orderId, "parentTable", "CUSTOMER", "keys", 1] = customerId
+        ORDERS[orderId", "subTable", "ITEM", "keys", 1] = orderId
+        ORDERS[orderId", "subTable", "ITEM", "keys", 2] = itemNumber
 
         ITEM[orderId, itemNumber, "fields", "description"] = description
         ITEM[orderId, itemNumber, "fields", "value"] = value
+        ITEM[orderId, itemNumber, "parentTable", "ORDERS", "keys", 1] = orderId
 
 So, for example, an actual populated set of tables might look like this:
 
         CUSTOMER[123, "fields", "name"] = "Rob Tweed"
         CUSTOMER[123, "fields", "address"] = "1, The Street, Redhill, Surrey"
         CUSTOMER[123, "fields", "totalValue"] = 100.00
-        CUSTOMER[123, "subtable", "ORDERS", 28) = ""
-        CUSTOMER[123, "subtable", "ORDERS", 42) = ""
+        CUSTOMER[123, "subTable", "ORDERS", 1, "keys", 1] = 28
+        CUSTOMER[123, "subTable", "ORDERS", 2, "keys", 1] = 42
 
         ORDERS[28, "fields", "customerId"] = 123
         ORDERS[28, "fields", "orderDate"] = "23/06/2020"
         ORDERS[28, "fields", "invoiceDate"] = "24/06/2020"
         ORDERS[28, "fields", "totalValue"] = 40.00
-        ORDERS[28, "subtable", "ITEM", 28) = ""
+        ORDERS[28, "parentTable", "CUSTOMER", "keys", 1] = 123
+
+        ORDERS[28, "subTable", "ITEM", 1, "keys", 1] = 28
+        ORDERS[28, "subTable", "ITEM", 1, "keys", 2] = 1
+
+        ORDERS[28, "subTable", "ITEM", 2, "keys", 1] = 28
+        ORDERS[28, "subTable", "ITEM", 2, "keys", 2] = 2
+
+        ORDERS[28, "subTable", "ITEM", 3, "keys", 1] = 28
+        ORDERS[28, "subTable", "ITEM", 3, "keys", 2] = 3
 
         ORDERS[42, "fields", "customerId"] = 123
         ORDERS[42, "fields", "orderDate"] = "19/09/2020"
         ORDERS[42, "fields", "invoiceDate"] = "21/09/2020"
         ORDERS[42, "fields", "totalValue"] = 60.00
-        ORDERS[42, "subtable", "ITEM", 42) = ""
+        ORDERS[42, "parentTable", "CUSTOMER", , "keys", 1] = 123
+        ORDERS[42, "subTable", "ITEM", 1, "keys", 1] = 42
+        ORDERS[42, "subTable", "ITEM", 1, "keys", 2] = 1
 
         ITEM[28, 1, "fields", "description"] = "widget 1"
         ITEM[28, 1, "fields", "value"] = 10.00
+        ITEM[28, 1, "parentTable", "ORDERS", "keys", 1] = 28
         ITEM[28, 2, "fields", "description"] = "widget 2"
         ITEM[28, 2, "fields", "value"] = 25.00
+        ITEM[28, 2, "parentTable", ""ORDERS", "keys", 1] = 28
         ITEM[28, 3, "fields", "description"] = "widget 3"
         ITEM[28, 3, "fields", "value"] = 5.00
+        ITEM[28, 3, "parentTable", "ORDERS", "keys", 1] = 28
 
         ITEM[42, 1, "fields", "description"] = "widget 4"
         ITEM[42, 1, "fields", "value"] = 60.00
-
-
+        ITEM[42, 3, "parentTable", "ORDERS", "keys", 1] = 42
 
