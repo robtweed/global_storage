@@ -75,8 +75,13 @@ A Relational Database normally requires such table definitions to be formally de
 
 Global Storage, of course, is schema-free, so, for SQL support of a relational database built using Global Storage, it's usually necessary to also create a set of Globals for the schemas that define relational tables.  This is beyond the scope of this document: we'll just focus on how the tables themselves could be modelled.
 
-As always, there are numerous potential ways to model relational tables, but here's one such way:
+As always, there are numerous potential ways to model relational tables, but here's one such way.  In this suggested specification, the intention is that the model is *computable*, with the Global Storage for any one table containing enough information to navigate up and down any associated relationships to/from other tables.
 
+At the very top, therefore, we have a "master" record, providing pointers down to top-level tables:
+
+        DATABASE["subTable", top_table_name, "key:" + key_name(s)"] = ""
+
+  where key_name(s) is a comma-delimited list of the *key field* names for the top table.
 
 The tables themselves could be defined using the model:
 
@@ -86,74 +91,105 @@ while the relationship to other subsidiary tables could be modelled as:
 
 - pointing down a one-to-many relationship from the one to the many:
 
-        tableName[key_1, (...key_n,) "subTable", sub_tableName, "keys", key_position] = key_value
+        tableName[key_1, (...key_n,) "subTable", sub_tableName, "key:" + key_name(s), key_value*] = ""
+
+    where key_value* is one or more key values, as specified by the key_name(s) list.
 
 - pointing up from the many to the one:
 
-        tableName[key_1, (...key_n,) "parentTable", parent_tableName, "keys", key_position] = key_value
+        tableName[key_1, (...key_n,) "parentTable", parent_tableName, "key:" + key_name(s), key_value*] = ""
 
+This is somewhat more complex a structure than we've seen for the other NoSQL database models.  It's noteworthy because it demonstrates just how flexible your design of subscripts and the semantics of their values can be.  This model hopefully becomes more understandable when applied to an example.
 
-So for our example:
+For our example, the model would look as follows
+
+- the top-level "master" record, which tells us that we have a top-level table named *CUSTOMER" which has a single *key field* named *customerId*:
+
+        DATABASE["subTable", "CUSTOMER", "key:customerId"] = ""
+
+The *CUSTOMER* table has the following fields for each *customerId*:
 
         CUSTOMER[customerId, "fields", "name"] = name
         CUSTOMER[customerId, "fields", "address"] = address
         CUSTOMER[customerId, "fields", "totalValue"] = totalValue
-        CUSTOMER[customerId, "subTable", "ORDERS", "keys", 1] = orderId
+
+Its parent table is the top-level "master" table (*DATABASE*), which has no keys:
+
+        CUSTOMER[customerId, "parentTable", "DATABASE", "key:"] = ""
+
+The *CUSTOMER* table has one related sub-table - *ORDERS* - which has a single *key field* named *orderId*.  Each such *subTable* record specifies the values of the *orderId*s related to this *customerId*:
+
+        CUSTOMER[customerId, "subTable", "ORDERS", "key:orderId", orderId] = ""
+
+
+The *ORDERS* table has the following fields for each *orderId*:
 
         ORDERS[orderId, "fields", "customerId"] = customerId
         ORDERS[orderId, "fields", "orderDate"] = orderDate
         ORDERS[orderId, "fields", "invoiceDate"] = invoiceDate
         ORDERS[orderId, "fields", "totalValue"] = totalValue
-        ORDERS[orderId, "parentTable", "CUSTOMER", "keys", 1] = customerId
-        ORDERS[orderId", "subTable", "ITEM", "keys", 1] = orderId
-        ORDERS[orderId", "subTable", "ITEM", "keys", 2] = itemNumber
+
+Its parent table is the *CUSTOMER* table which has a single key (*custimerId*), whose value is specified as the last subscript:
+
+        ORDERS[orderId, "parentTable", "CUSTOMER", "key:customerId", customerId] = ""
+
+The *ORDERS* table has one related sub-table - *ITEM* - which has two *key field*s named *orderId* and *itemNumber*.  Because *orderId* is already a *key* for the *ORDERS* table, we don't need to add it as a redundant penultimate subscript: instead we just specify the relevant value(s) for the *itemNumber* *key fields* of the *ITEM* table:
+
+        ORDERS[orderId, "subTable", "ITEM", "key:orderId,itemNumber", itemNumber] = "" 
+
+
+Finally, the *ITEM* table has the following fields for each unique combination of *orderId* and *itemNumber*:
 
         ITEM[orderId, itemNumber, "fields", "description"] = description
         ITEM[orderId, itemNumber, "fields", "value"] = value
-        ITEM[orderId, itemNumber, "parentTable", "ORDERS", "keys", 1] = orderId
 
-So, for example, an actual populated set of tables might look like this:
+Its parent table is *ORDERS* which has a single key (*orderId*). Because this is already specified as a *key field* in each *ITEM* record, its value can be implied and therefore doesn't need to be redundantly specified as the final subscript:
+
+        ITEM[orderId, itemNumber, "parentTable", "ORDERS", "key:orderId”] = ""
+
+Finally, the *ITEM* table doesn't have any related sub-tables.
+
+
+So, based on this model, let's show a worked example of some actual records for these 3 tables in Global Storage:
+
+        DATABASE["subTable", "CUSTOMER", "key:customerId"] = ""
 
         CUSTOMER[123, "fields", "name"] = "Rob Tweed"
         CUSTOMER[123, "fields", "address"] = "1, The Street, Redhill, Surrey"
         CUSTOMER[123, "fields", "totalValue"] = 100.00
-        CUSTOMER[123, "subTable", "ORDERS", 1, "keys", 1] = 28
-        CUSTOMER[123, "subTable", "ORDERS", 2, "keys", 1] = 42
+        CUSTOMER[123, "parentTable", "DATABASE", "key:"] = ""
+        CUSTOMER[123, "subTable", "ORDERS", "key:orderId", 28] = ""
+        CUSTOMER[123, "subTable", "ORDERS", "key:orderId", 42] = ""
 
         ORDERS[28, "fields", "customerId"] = 123
         ORDERS[28, "fields", "orderDate"] = "23/06/2020"
         ORDERS[28, "fields", "invoiceDate"] = "24/06/2020"
         ORDERS[28, "fields", "totalValue"] = 40.00
-        ORDERS[28, "parentTable", "CUSTOMER", "keys", 1] = 123
-
-        ORDERS[28, "subTable", "ITEM", 1, "keys", 1] = 28
-        ORDERS[28, "subTable", "ITEM", 1, "keys", 2] = 1
-
-        ORDERS[28, "subTable", "ITEM", 2, "keys", 1] = 28
-        ORDERS[28, "subTable", "ITEM", 2, "keys", 2] = 2
-
-        ORDERS[28, "subTable", "ITEM", 3, "keys", 1] = 28
-        ORDERS[28, "subTable", "ITEM", 3, "keys", 2] = 3
+        ORDERS[28, "parentTable", "CUSTOMER", "key:customerId", 123] = ""
+        ORDERS[28, "subTable", "ITEM", "key:orderId,itemNumber", 1] = "" 
+        ORDERS[28, "subTable", "ITEM", "key:orderId,itemNumber", 2] = "" 
+        ORDERS[28, "subTable", "ITEM", "key:orderId,itemNumber", 3] = "" 
 
         ORDERS[42, "fields", "customerId"] = 123
         ORDERS[42, "fields", "orderDate"] = "19/09/2020"
         ORDERS[42, "fields", "invoiceDate"] = "21/09/2020"
         ORDERS[42, "fields", "totalValue"] = 60.00
-        ORDERS[42, "parentTable", "CUSTOMER", , "keys", 1] = 123
-        ORDERS[42, "subTable", "ITEM", 1, "keys", 1] = 42
-        ORDERS[42, "subTable", "ITEM", 1, "keys", 2] = 1
+        ORDERS[42, "parentTable", "CUSTOMER", "key:customerId", 123] = ""
+        ORDERS[42, "subTable", "ITEM", "key:orderId,itemNumber", 1] = "" 
 
         ITEM[28, 1, "fields", "description"] = "widget 1"
         ITEM[28, 1, "fields", "value"] = 10.00
-        ITEM[28, 1, "parentTable", "ORDERS", "keys", 1] = 28
+        ITEM[28, 1, "parentTable", "ORDERS", "key:orderId”] = ""
+
         ITEM[28, 2, "fields", "description"] = "widget 2"
         ITEM[28, 2, "fields", "value"] = 25.00
-        ITEM[28, 2, "parentTable", ""ORDERS", "keys", 1] = 28
+        ITEM[28, 2, "parentTable", "ORDERS", "key:orderId”] = ""
+
         ITEM[28, 3, "fields", "description"] = "widget 3"
         ITEM[28, 3, "fields", "value"] = 5.00
-        ITEM[28, 3, "parentTable", "ORDERS", "keys", 1] = 28
+        ITEM[28, 3, "parentTable", "ORDERS", "key:orderId”] = ""
 
         ITEM[42, 1, "fields", "description"] = "widget 4"
         ITEM[42, 1, "fields", "value"] = 60.00
-        ITEM[42, 3, "parentTable", "ORDERS", "keys", 1] = 42
+        ITEM[42, 1, "parentTable", "ORDERS", "key:orderId”] = ""
 
