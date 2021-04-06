@@ -193,3 +193,116 @@ So, based on this model, let's show a worked example of some actual records for 
         ITEM[42, 1, "fields", "value"] = 60.00
         ITEM[42, 1, "parentTable", "ORDERS", "key:orderId”] = ""
 
+
+## Working with SQL
+
+The implemention an SQL engine to interoperate with a Global Storage representation of a Relational Database is beyond the scope of this document.  The main Native Global Storage Databases (YottaDB, Cach&eacute; and IRIS) provide SQL engines, though they use their own particular Global Storage model.
+
+We provide an Open Source SQL engine for these Native Global Storage databases: it is quite flexible in terms of your Global Storage Relational model, and will work well against the model described above in this document.
+
+There is currently no available SQL engine that would work "out of the box" with a layered implementation of Global Storage (eg for Redis or BerkeleyDB), but it should be possible to build one.
+
+With that in mind, let's examine how our Global Storage model of a Relational Database should behave when accessed via SQL.
+
+### *INSERT*ing data
+
+Typically you would expect to use the SQL *INSERT* command to add data into a table.  For example:
+
+        INSERT INTO CUSTOMER (customerId, :name, :address)
+        VALUES (:customerId, :name, :address)
+
+If the values of these variables at run-time were:
+
+- customerId: 123
+- name: 'Rob Tweed'
+- address: '1, The Street, Redhill, Surrey'
+
+The SQL engine would invoke the appropriate Global Storage *Set* APIs to create the main data field records:
+
+        CUSTOMER[123, "fields", "name"] = "Rob Tweed"
+        CUSTOMER[123, "fields", "address"] = "1, The Street, Redhill, Surrey"
+
+It should also create the upward pointing record/index:
+
+        CUSTOMER[123, "parentTable", "DATABASE", "key:"] = ""
+
+to the top-level static "master" record which should have been created during the schema creation stage:
+
+        DATABASE["subTable", "CUSTOMER", "key:customerId"] = ""
+
+
+Adding an order would be done similarly, eg:
+
+        INSERT INTO ORDERS (orderId, :customerId, :orderDate, :invoiceDate)
+        VALUES (:orderId, :customerId, {d:orderDate}, {d:invoiceDate})
+
+At run-time, let's assume the values were:
+
+- orderId: 101
+- customerId: 123
+- orderDate: '2021-04-01'
+- invoiceDate: '2021-04-03'
+
+...and its items:
+
+        INSERT INTO ITEM (orderId, itemNumber, :description, :value)
+        VALUES (:orderId, :itemNumber, :description, :value)
+
+Again, at run-time we'll assume the values for two items were:
+
+- orderId: 101
+- itemNumber: 1
+- description: Garden Chairs
+- value: 40.00
+
+- orderId: 101
+- itemNumber: 2
+- description: Garden Table
+- value: 60.00
+
+
+The SQL engine should translate these into Global Storage *Set* APIs that create the data field records:
+
+        ORDERS[101, "fields", "customerId"] = 123
+        ORDERS[101, "fields", "invoiceDate"] = 65837 // or some other appropriate internal representation of the date
+        ORDERS[101, "fields", "orderDate"] = 65835  // ditto
+
+        ITEMS[101, 1, "fields", "description"] = "Gargen Chairs"
+        ITEMS[101, 1, "fields", "value"] = 40.00
+
+        ITEMS[101, 2, "fields", "description"] = "Gargen Table"
+        ITEMS[101, 2, "fields", "value"] = 60.00
+
+In addition it should create the upward and downward pointer records/indices:
+
+        CUSTOMER[123, "subTable", "ORDERS","key:orderId",101)=""
+
+        ORDERS[101, "parentTable", "CUSTOMER", "key:customerId", 123] = ""
+        ORDERS[101, "subTable", "ITEM", "key:orderId,itemNumber", 1] = "" 
+        ORDERS[101, "subTable", "ITEM", "key:orderId,itemNumber", 2] = ""
+
+        ITEM[101, 1, "parentTable", "ORDERS", "key:orderId”] = ""
+        ITEM[101, 2, "parentTable", "ORDERS", "key:orderId”] = ""
+
+
+### Querying the Database
+
+It should be possible to query the data stored in this Relational Database in the standard SQL way, for example:
+
+        SELECT a.name, a.address
+        FROM CUSTOMER a
+        WHERE a.customerId = :customerId
+
+The SQL engine would translate this into two Global Storage *Get* APIs:
+
+        Get CUSTOMER[customerId, "fields", "name"]
+        Get CUSTOMER[customerId, "fields", "address"]
+
+Of course, things get more complex when SQL JOINs are used.  This is where the upward and pointer records/indices would come into play, along with the Global Storage 
+[*Next* API](./Subscripts.md#next) to retrieve all the matching records implied by the JOIN.
+
+Typically the Relational Database model would be augmented with additional 
+[indices](./Indexing.md) (specified as part of the initial database schema definition stage).  These would be used by the SQL Engine's query parser to optimise queries that selected based on particular field values or ranges.
+
+Such details are beyond the scope of this document, but hopefully you can see how the Global Storage database and its associated APIs can provide the basis of a fully-functional Relational Database and can underpin an associated SQL engine.
+
