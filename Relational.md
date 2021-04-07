@@ -250,15 +250,19 @@ At run-time, let's assume the values were:
 
 Again, at run-time we'll assume the values for two items were:
 
-- orderId: 101
-- itemNumber: 1
-- description: Garden Chairs
-- value: 40.00
+- first item:
 
-- orderId: 101
-- itemNumber: 2
-- description: Garden Table
-- value: 60.00
+  - orderId: 101
+  - itemNumber: 1
+  - description: Garden Chairs
+  - value: 40.00
+
+- second item:
+
+  - orderId: 101
+  - itemNumber: 2
+  - description: Garden Table
+  - value: 60.00
 
 
 The SQL engine should translate these into Global Storage *Set* APIs that create the data field records:
