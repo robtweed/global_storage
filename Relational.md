@@ -145,7 +145,7 @@ Finally, the *ITEM* table has the following fields for each unique combination o
 
 Its parent table is *ORDERS* which has a single key (*orderId*). Because this is already specified as a *key field* in each *ITEM* record, its value can be implied and therefore doesn't need to be redundantly specified as the final subscript:
 
-        ITEM[orderId, itemNumber, "parentTable", "ORDERS", "key:orderId”] = ""
+        ITEM[orderId, itemNumber, "parentTable", "ORDERS", "key:orderId"] = ""
 
 Finally, the *ITEM* table doesn't have any related sub-tables.
 
@@ -179,19 +179,19 @@ So, based on this model, let's show a worked example of some actual records for 
 
         ITEM[28, 1, "fields", "description"] = "widget 1"
         ITEM[28, 1, "fields", "value"] = 10.00
-        ITEM[28, 1, "parentTable", "ORDERS", "key:orderId”] = ""
+        ITEM[28, 1, "parentTable", "ORDERS", "key:orderId"] = ""
 
         ITEM[28, 2, "fields", "description"] = "widget 2"
         ITEM[28, 2, "fields", "value"] = 25.00
-        ITEM[28, 2, "parentTable", "ORDERS", "key:orderId”] = ""
+        ITEM[28, 2, "parentTable", "ORDERS", "key:orderId"] = ""
 
         ITEM[28, 3, "fields", "description"] = "widget 3"
         ITEM[28, 3, "fields", "value"] = 5.00
-        ITEM[28, 3, "parentTable", "ORDERS", "key:orderId”] = ""
+        ITEM[28, 3, "parentTable", "ORDERS", "key:orderId"] = ""
 
         ITEM[42, 1, "fields", "description"] = "widget 4"
         ITEM[42, 1, "fields", "value"] = 60.00
-        ITEM[42, 1, "parentTable", "ORDERS", "key:orderId”] = ""
+        ITEM[42, 1, "parentTable", "ORDERS", "key:orderId"] = ""
 
 
 ## Working with SQL
@@ -208,7 +208,7 @@ With that in mind, let's examine how our Global Storage model of a Relational Da
 
 Typically you would expect to use the SQL *INSERT* command to add data into a table.  For example:
 
-        INSERT INTO CUSTOMER (customerId, :name, :address)
+        INSERT INTO CUSTOMER (customerId, name, address)
         VALUES (:customerId, :name, :address)
 
 If the values of these variables at run-time were:
@@ -233,7 +233,7 @@ to the top-level static "master" record which should have been created during th
 
 Adding an order would be done similarly, eg:
 
-        INSERT INTO ORDERS (orderId, :customerId, :orderDate, :invoiceDate)
+        INSERT INTO ORDERS (orderId, customerId, orderDate, invoiceDate)
         VALUES (:orderId, :customerId, {d:orderDate}, {d:invoiceDate})
 
 At run-time, let's assume the values were:
@@ -245,7 +245,7 @@ At run-time, let's assume the values were:
 
 ...and its items:
 
-        INSERT INTO ITEM (orderId, itemNumber, :description, :value)
+        INSERT INTO ITEM (orderId, itemNumber, description, value)
         VALUES (:orderId, :itemNumber, :description, :value)
 
 Again, at run-time we'll assume the values for two items were:
@@ -281,8 +281,8 @@ In addition it should create the upward and downward pointer records/indices:
         ORDERS[101, "subTable", "ITEM", "key:orderId,itemNumber", 1] = "" 
         ORDERS[101, "subTable", "ITEM", "key:orderId,itemNumber", 2] = ""
 
-        ITEM[101, 1, "parentTable", "ORDERS", "key:orderId”] = ""
-        ITEM[101, 2, "parentTable", "ORDERS", "key:orderId”] = ""
+        ITEM[101, 1, "parentTable", "ORDERS", "key:orderId"] = ""
+        ITEM[101, 2, "parentTable", "ORDERS", "key:orderId"] = ""
 
 
 ### Querying the Database
