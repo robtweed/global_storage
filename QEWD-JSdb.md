@@ -57,16 +57,17 @@ As JSON originated in the JavaScript language, and as JavaScript is naturally de
 
 But QEWD-JSdb actually takes things one step even further by blurring the distinction between in-memory and on-disk JSON by implementing what we term *persistent JavaScript Objects*: Objects whose contents transparently and seamlessly reside on-disk rather than in-memory.  
 
-A key intention of QEWD-JSdb, then, is to remove the hard-line that traditionally separates a programming language from a database, and instead make the database something that is largely transparent to the developer.  The developer needs only decide: is the JSON data structure that I want to use and maintain temporary and ephemeral (so therefore appropriate as in-memory) or something I want to persist permanently or semi-permanently (so therefore appropriate for storage on-disk)?  I like to describe this concept as *databaseless* persistent data.  Yes, of course it actually requires a database - a Global Storage database - but it doesn't seem like it to the developer when accessing it.
+A key intention of QEWD-JSdb, then, is to remove the hard-line that traditionally separates a programming language from a database, and instead make the database something that is largely transparent to the developer.  The developer needs only decide: is the JSON data structure that I want to use and maintain temporary and ephemeral (so therefore appropriate as in-memory) or something I want to persist permanently or semi-permanently (so therefore appropriate for storage on-disk)?  I like to describe this concept as *databaseless* persistent data.  Yes, of course it actually requires a database - a Global Storage database - but it doesn't seem like it to the developer when accessing it: you're just using Objects instead.
+
+These concepts and the backround to the thinking behind QEWD-JSdb are further explored in 
+[this presentation](https://www.youtube.com/watch?v=1TlAKTw167s&list=PLam_80-FY3vSPW9apMaczTN_4dtke9GYM)
+, given by Rob Tweed at the [London Node.js Users Group](https://lnug.org)
+ meeting in January 2020.
 
 
 ## Getting Started with QEWD-JSdb
 
-You might want to begin by watching [this presentation on QEWD-JSdb](https://www.youtube.com/watch?v=1TlAKTw167s&list=PLam_80-FY3vSPW9apMaczTN_4dtke9GYM)
-, given by Rob Tweed at the [London Node.js Users Group](https://lnug.org)
- meeting in January 2020.
-
-The [QEWD-JSdb Github Repository](https://github.com/robtweed/qewd-jsdb) is then the best place to continue.  It provides a comprehensive set of documentation and tutorials.  These include tutorials allowing you to explore, using JavaScript, the various NoSQL models that are already implemented in and an integral part of QEWD-JSdb.
+The [QEWD-JSdb Github Repository](https://github.com/robtweed/qewd-jsdb) is the best place to start.  It provides a comprehensive set of documentation and tutorials.  These include tutorials allowing you to explore, using JavaScript, the various NoSQL models that are already implemented in and an integral part of QEWD-JSdb.
 
 QEWD-JSdb is actually an integral part of a more wide-reaching technology known as 
 [QEWD](https://github.com/robtweed/qewd).  QEWD provides a back-end Node.js-based development platform and run-time environment for *databaseless* REST and interactive browser-based applications using QEWD-JSdb.
