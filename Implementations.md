@@ -31,11 +31,11 @@ It is possible to implement a Global Storage database engine as an abstraction o
 - [**Oracle Berkeley DB**](https://www.oracle.com/uk/database/technologies/related/berkeleydb.html)
 - [**Lightning Memory-Mapped Database (LMDB)**](https://symas.com/lmdb/)
 
-Both databases are probably best-known for their use to implement the [Lightweight Directory Access Protoco (LDAP)](https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol), where LMDB has largely supplanted Berkeley DB as a result of LMDB's reported better performance.
+Both databases are probably best-known for their use in implementing the [Lightweight Directory Access Protoco (LDAP)](https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol), where LMDB has largely supplanted Berkeley DB as a result of LMDB's reported better performance.
 
 
 Perhaps somewhat surprisingly, it has also proven possible to implement Global Storage on the 
-[Redis](https://redis.io) database.  Whilst this is primarily best known as a high-performance key/value database, it has two particular features that made Global Storage abstraction possible:
+[Redis](https://redis.io) database.  Whilst this is primarily best known as a high-performance key/value database, it has two particular features that makes Global Storage abstraction possible:
 
 - sorted sets (using the Z- APIs), which make it possible to implement the automatic sorting behaviour of Global subscripts
 - distributed locks, allowing the implementation of the Global Storage Lock and Unlock APIs.
@@ -45,9 +45,6 @@ We have implemented these three Open Source Global Storage abstractions using th
 - [Berkeley DB and LMDB](https://github.com/chrisemunt/mg-dbx-bdb)
 - [Redis](https://github.com/robtweed/ewd-redis-globals)
 
-Our [QEWD-JSdb](https://github.com/robtweed/qewd-jsdb) *databaseless* [Persistent JavaScript Objects](./QEWD-JSdb.md#qewd-jsdb-on-disk-or-in-memory-javascript-objects) abstraction of Global Storage can integrate directly with these abstracted Global Storage Implementations.  [Read this document](QEWD-JSdb.md#trying-out-qewd-jsdb-with-the-various-global-storage-databases) to learn how to try them out.
+Our [QEWD-JSdb](https://github.com/robtweed/qewd-jsdb) *databaseless* [Persistent JavaScript Objects](./QEWD-JSdb.md#qewd-jsdb-on-disk-or-in-memory-javascript-objects) abstraction of Global Storage can integrate directly with these abstracted Global Storage Implementations.  When using QEWD-JSdb, all the Global Storage databases, both Native and abstractions, appear to behave identically.
 
-
-
-
-
+[Read this document](QEWD-JSdb.md#trying-out-qewd-jsdb-with-the-various-global-storage-databases) to learn how to try them out with QEWD-JSdb.
