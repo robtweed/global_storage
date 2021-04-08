@@ -26,12 +26,18 @@ The latter interface is used by our [QEWD-JSdb](https://github.com/robtweed/qewd
 
 ## Global Storage Abstractions on other Databases
 
-It is possible to implement a Global Storage database engine as an abstraction on top of certain other database technologies.  The most suitable candidate databases for such an abstraction are ones that are essentially low-level hierarchical databases.  The two best known and most widely used are so-called *embedded databases*:
+It is possible to implement a Global Storage database engine as an abstraction on top of certain other database technologies.  The most suitable candidate databases for such an abstraction are ones that are essentially low-level hierarchical databases.  In particular, implementing the 
+[automatic alphanumeric collation of Global subscripts](./Subscripts.md#alphanumeric-collation-of-subscripts)
+is made possible in databases that use and/or expose a so-called 
+[*b-tree*](https://en.wikipedia.org/wiki/B-tree) model.
+
+The two best known and most widely used examples of such candidate databases (both also so-called 
+[*embedded databases*](https://en.wikipedia.org/wiki/Embedded_database)) are:
 
 - [**Oracle Berkeley DB**](https://www.oracle.com/uk/database/technologies/related/berkeleydb.html)
 - [**Lightning Memory-Mapped Database (LMDB)**](https://symas.com/lmdb/)
 
-Both databases are probably best-known for their use in implementing the [Lightweight Directory Access Protoco (LDAP)](https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol), where LMDB has largely supplanted Berkeley DB as a result of LMDB's reported better performance.
+Both these databases are probably best-known for their use in implementing the [Lightweight Directory Access Protoco (LDAP)](https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol), where LMDB has now largely supplanted Berkeley DB as a result of LMDB's reported better performance.
 
 
 Perhaps somewhat surprisingly, it has also proven possible to implement Global Storage on the 
