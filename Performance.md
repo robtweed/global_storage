@@ -18,7 +18,8 @@ In order to create a "level playing field" for proper cross-comparison, and to a
 The source Dockerfiles for these and other Containers we've created are in 
 [this Github Repository](https://github.com/robtweed/dockerfiles).  Pre-built copies can be pulled from Docker Hub.  Specifically:
 
-- YottaDB:
+- YottaDB
+  - for Linux on Intel x86:
     - [Source](https://github.com/robtweed/dockerfiles/tree/master/qewd-server)
     - or *docker pull rtweed/qewd-server*
   - for Linux on ARM 64:
