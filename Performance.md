@@ -311,7 +311,7 @@ I say "contrary to our expectations" because:
 - BDB, LMDB and Redis are renowned as being probably the fastest databases known;
 - the simple Set and Get tests were exercising these databases in pretty much the most natural way.  Nothing unusual was being done and we had expected them to be blisteringly fast.
 
-As it turned out, in the Set and Get tests, the Native Global Storage databases appear to be capable to significantly outperforming the others as simple key/value stores. The fact that both IRIS and YottaDB are almost unknown in the mainstream IT community is therefore pretty surprising.
+As it turned out, in the Set and Get tests, the Native Global Storage databases appear to be capable of significantly outperforming the others as simple key/value stores. The fact that both IRIS and YottaDB are almost unknown in the mainstream IT community is therefore pretty surprising.
 
 As the more "real world* XML DOM test also shows, these Native Global Storage databases similarly outperform the other databases by a wide margin.
 
