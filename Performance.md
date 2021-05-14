@@ -65,7 +65,7 @@ The source Dockerfiles for these and other Containers we've created are in
 Note that the ARM 64 versions should be used on:
 
 - Apple MacOS-based machines using the M1 processor
-- Raspberry Pi running 640-bit Ubuntu Linux
+- Raspberry Pi running 64-bit Ubuntu Linux
 
 
 IRIS has to be handled a bit differently, as it is a proprietary product and we have to use the packaging made available by InterSystems.  However, they do make a Dockerised, so-called 
@@ -97,7 +97,7 @@ Once again, we've provided pre-built kits which create the appropriate mapped vo
 
 ## Test Platform used for the Results Reported in this Document
 
-The performance tests reported in this document were conducted on an Intel i7 (8th generation) NUC, with Samsung NVME SD and 16Gb RAM, running Windows 10 Professional.  A Unbuntu Linux Virtual Machine, running via HyperV on this machine was used to host the Docker Containers.
+The performance tests reported in this document were conducted on an Intel i7 (8th generation) NUC, with Samsung NVME SD and 16Gb RAM, running Windows 10 Professional.  The same Unbuntu Linux Virtual Machine, running via HyperV on this machine, was used to host each of the Docker Containers in turn (only one container was running at a time).
 
 
 ## Database Implementations and Configuration
@@ -132,9 +132,9 @@ This provides a basic idea of how fast each implementation can create and store 
 
 - For YottaDB and IRIS, this test directly creates the Global Nodes.  This is done via Node.js as follows:
 
-  - having created an instance of the interface component and opened a connection to the database, perform a simple loop:
+  - having created an instance of the interface component and opened a connection to the database, perform a simple loop setting 500,000 key/value pair Global Nodes:
 
-        var max = 1000000;
+        var max = 500000;
         var global = new mglobal(db, 'cm');
         for (var n = 1; n <= max; n++) {
           global.set(n, "Chris Munt");
@@ -210,13 +210,13 @@ This provides a basic idea of how fast each implementation can create and store 
 
 ### Results
 
-(Draft to be confirmed) Summary results (per 100,000 Global Sets):
+Creating 500,000 Global Nodes (average of multiple runs):
 
-- IRIS: 0.22 sec
-- YottaDB: 0.25 sec
-- BDB: 1.4 sec
-- LMDB: 180 sec
-- Redis: 40.2 sec
+- IRIS: 1.16 sec
+- YottaDB: 1.23 sec
+- BDB: 1.70 sec
+- LMDB: 3672.02 sec
+- Redis: 194.19 sec
 
 
 ## Basic Global Get (Read) Performance Test
@@ -236,13 +236,13 @@ Basically the only key difference in the Get/Read test for each database is the 
 
 ### Results
 
-(Preliminary draft results, to be confirmed)  Time to read/get 100,000 Global Nodes:
+Average ime to read/get 500,000 Global Nodes:
 
-- IRIS: 0.16 sec
-- YottaDB: 0.17 sec
-- BDB: 1.4 sec
-- LMDB: 1.25 sec
-- Redis: 10.34 sec
+- IRIS: 0.87 sec
+- YottaDB: 0.78 sec
+- BDB: 1.45 sec
+- LMDB: 1.13 sec
+- Redis: 49.71 sec
 
 
 ## XML DOM Parsing Performance
@@ -271,59 +271,59 @@ The same XML Document was used for each database, and the lengths of time were r
 - parse/create the DOM in Global Storage; and then 
 - recurse through the DOM structure to re-create the XML document
 
-In all cases the logic was identical, using the QEWD-JSdb XML DOM API abstractions.
+In all cases the logic was identical, using the exact same QEWD-JSdb XML DOM API abstractions.
 
 ### Results
 
-To be provided, but preliminary results are:
-
 - YottaDB:
-  - parse: 3.4 sec
-  - output back to XML: 0.8 sec
+  - parse: 3.22 sec
+  - output back to XML: 0.74 sec
 
 - IRIS:
 
-  - parse: 4.1 sec
-  - output back to XML: 0.8 sec
-
-- Redis:
-
-  - parse: 28.9 sec
-  - output back to XML: 4 sec
+  - parse: 3.70 sec
+  - output back to XML: 0.82 sec
 
 - BDB:
 
-  - parse: 7.1 sec
-  - output back to XML: 1.9 sec
+  - parse: 3.69 sec
+  - output back to XML: 0.93 sec
 
 - LMDB:
 
-  - parse: ?
-  - output back to XML: ?
+  - parse: 161.45 sec
+  - output back to XML: 0.73
+
+- Redis:
+
+  - parse: 27.34 sec
+  - output back to XML: 4.06 sec
 
 
 ## Conclusions
 
-It is pretty clear from these tests that, contrary to our expectations, the Native Global Storage databases (ie IRIS and YottaDB) significantly outperform the other databases.
+It is pretty clear from these tests that, contrary to our expectations, the Native Global Storage databases (ie IRIS and YottaDB) consistently outperform the other databases, although BDB is close behind them.
 
 I say "contrary to our expectations" because:
 
-- BDB, LMDB and Redis are renowned as being probably the fastest databases known;
+- BDB, LMDB and Redis are renowned as being probably the fastest available databases;
 - the simple Set and Get tests were exercising these databases in pretty much the most natural way.  Nothing unusual was being done and we had expected them to be blisteringly fast.
 
-As it turned out, in the Set and Get tests, the Native Global Storage databases appear to be capable of significantly outperforming the others as simple key/value stores. The fact that both IRIS and YottaDB are almost unknown in the mainstream IT community is therefore pretty surprising.
+As it turned out, in the Set and Get tests, the Native Global Storage databases appear to be capable of outperforming the others as simple key/value stores. The fact that both IRIS and YottaDB are almost unknown in the mainstream IT community is therefore pretty surprising.
 
-As the more "real world* XML DOM test also shows, these Native Global Storage databases similarly outperform the other databases by a wide margin.
+As the more "real world* XML DOM test also shows, these Native Global Storage databases similarly outperform the other databases.  BDB comes close to their performance, but was consistently outpaced by YottaDB and IRIS on repeated test runs by the margins shown above.  
+
+LMDB was surprisingly slow on writes, but its read performance was close to that of IRIS and YottaDB.  However, once again, throughout repeated tests, LMDB's read performance was always consistently slower than that of IRIS and YottaDB by the margin shown in the results.
+
+Whilst Redis has a reputation as an extremely fast key/value store, it has to be accessed via a TCP network connection, whilst all the other databases are embedded and accessed via a high-performance API.  Network throughput is almost certainly the primary constraint on Redis's performance, making it significantly slower than IRIS, YottaDB and BDB in our tests.  Anyone looking for an extremely fast key/value store to use with Node.js should seriously consider IRIS or YottaDB instead of Redis.
 
 We have little doubt that an expert in each of the databases could tune them for improved performance, however:
 
-- the difference in performance is so significant between IRIS and YottaDB versus the others, that we doubt that difference could be made up, given the limited control possible in embedded databases;
+- the difference in performance is so significant between IRIS and YottaDB versus LMDB and Redis, that we doubt that difference could be made up, given the limited control possible in embedded databases;
 
 - whatever difference could be made up could probably be equalled by an expert in tuning IRIS or YottaDB.
 
-The overwhelming conclusion has to be that the Native Global Storage databases appear to be one of the "best kept secrets" in the IT world.  The fact is that they are blisteringly fast at anything including simple key/value storage and retrieval, and, as has been shown in this set of documents, they have a "Universal NoSQL" capability that makes them the most versatile databases available.
+The overwhelming conclusion has to be that the Native Global Storage databases appear to be one of the "best kept secrets" in the IT world.  The fact is that they are blisteringly fast at anything including simple key/value storage and retrieval, and, as has been shown in this set of documents, they have a "Universal NoSQL" capability that makes them arguably the most versatile databases available.
 
-Whether of not you've ever heard of these databases before, our study suggests you really need to check them out as soon as possible!
-
-
+Whether of not you've ever heard of Native Global Storage databases before, our study suggests you really need to check them out as soon as possible!
 
